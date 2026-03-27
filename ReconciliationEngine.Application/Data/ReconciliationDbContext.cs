@@ -21,6 +21,11 @@ public class ReconciliationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<ReconciliationRecordTransaction>(entity =>
+        {
+            entity.HasKey(rt => new { rt.ReconciliationRecordId, rt.TransactionId });
+        });
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ReconciliationDbContext).Assembly);
     }
 }
