@@ -12,10 +12,13 @@ public class IngestTransactionCommand : IRequest<IngestTransactionResult>
     public string? Description { get; set; }
     public string? Reference { get; set; }
     public string? AccountId { get; set; }
+    public Guid CorrelationId { get; set; }
+    public string PerformedBy { get; set; } = string.Empty;
 }
 
 public class IngestTransactionResult
 {
     public Guid TransactionId { get; set; }
     public bool IsDuplicate { get; set; }
+    public int StatusCode { get; set; }
 }

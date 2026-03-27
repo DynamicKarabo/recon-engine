@@ -1,8 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ReconciliationEngine.Domain.Entities;
-using ReconciliationEngine.Infrastructure.Data.Configurations;
 
-namespace ReconciliationEngine.Infrastructure.Data;
+namespace ReconciliationEngine.Application.Data;
 
 public class ReconciliationDbContext : DbContext
 {
@@ -22,11 +21,6 @@ public class ReconciliationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.ApplyConfiguration(new TransactionConfiguration());
-        modelBuilder.ApplyConfiguration(new ReconciliationRecordConfiguration());
-        modelBuilder.ApplyConfiguration(new ReconciliationRecordTransactionConfiguration());
-        modelBuilder.ApplyConfiguration(new ExceptionRecordConfiguration());
-        modelBuilder.ApplyConfiguration(new AuditLogConfiguration());
-        modelBuilder.ApplyConfiguration(new MatchingRuleConfiguration());
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ReconciliationDbContext).Assembly);
     }
 }
