@@ -186,3 +186,5 @@ public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
         return httpContext?.User?.IsInRole(Roles.Admin) ?? false;
     }
 }
+
+public partial class Program { }
