@@ -1,0 +1,6 @@
+@ReconciliationEngine.API_HostAddress = http://localhost:5290
+
+GET {{ReconciliationEngine.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
