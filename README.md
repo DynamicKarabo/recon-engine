@@ -1,49 +1,51 @@
 # Financial Reconciliation Engine
 
-A .NET 8 backend for a Financial Reconciliation Engine, built with Clean Architecture.
+<p align="center">
+  <img src="https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=.net&logoColor=white" alt=".NET 8" />
+  <img src="https://img.shields.io/badge/Clean_Architecture-4CAF50?style=for-the-badge" alt="Clean Architecture" />
+  <img src="https://img.shields.io/badge/tests-72_passing-success?style=for-the-badge" alt="Tests" />
+</p>
+
+<p align="center">
+  A .NET 8 backend for a Financial Reconciliation Engine, built with Clean Architecture.
+</p>
+
+---
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           API Layer (ReconciliationEngine.API)              │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────────┐   │
-│  │  Controllers │  │   Middleware │  │  Hangfire    │  │   Swagger     │   │
-│  └─────────────┘  └──────────────┘  └──────────────┘  └────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                    ┌─────────────────┴─────────────────┐
-                    ▼                                   ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      Application Layer (ReconciliationEngine.Application)     │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────────┐   │
-│  │  Commands   │  │   Queries    │  │  Validators  │  │  Behaviors    │   │
-│  │  Handlers   │  │              │  │              │  │  (Pipeline)   │   │
-│  └─────────────┘  └──────────────┘  └──────────────┘  └────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                    ┌─────────────────┴─────────────────┐
-                    ▼                                   ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      Domain Layer (ReconciliationEngine.Domain)              │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────────┐   │
-│  │  Entities   │  │    Enums     │  │    Events     │  │    Common      │   │
-│  │ Transaction  │  │TransactionSt │  │ Transaction  │  │    Entity      │   │
-│  │ ExceptionRec │  │ExceptionCat  │  │ IngestedEvent│  │    Base       │   │
-│  │ AuditLog     │  │ExceptionStat │  │ Transaction  │  │                │   │
-│  │ MatchingRule │  │ MatchMethod  │  │ MatchedEvent │  │                │   │
-│  └─────────────┘  └──────────────┘  └──────────────┘  └────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                    ┌─────────────────┴─────────────────┐
-                    ▼                                   ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                   Infrastructure Layer (ReconciliationEngine.Infrastructure)  │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────────┐   │
-│  │    EF Core   │  │  Encryption  │  │    Azure     │  │     Cache      │   │
-│  │   DbContext │  │   Service    │  │  Service Bus │  │   MatchingRule │   │
-│  └─────────────┘  └──────────────┘  └──────────────┘  └────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph API["API Layer (ReconciliationEngine.API)"]
+        C[Controllers]
+        M[Middleware]
+        H[Hangfire]
+        S[Swagger]
+    end
+
+    subgraph APP["Application Layer (ReconciliationEngine.Application)"]
+        CM[Commands]
+        Q[Queries]
+        V[Validators]
+        B[Behaviors]
+    end
+
+    subgraph DOM["Domain Layer (ReconciliationEngine.Domain)"]
+        E[Entities]
+        EN[Enums]
+        EV[Events]
+    end
+
+    subgraph INF["Infrastructure Layer (ReconciliationEngine.Infrastructure)"]
+        EF[EF Core]
+        ENC[Encryption]
+        ASB[Azure Service Bus]
+        CH[Cache]
+    end
+
+    API --> APP
+    APP --> DOM
+    APP --> INF
 ```
 
 ## Project Structure
@@ -142,12 +144,24 @@ ReconciliationEngine/
 - **Audited**: Append-only AuditLog with CorrelationId tracking
 
 ### Matching Pipeline
-```
-Transaction → Exact Match → Fuzzy Match → Rule-Based → Exception
-     │            │             │             │           │
-     └────────────┴─────────────┴─────────────┴───────────┘
-                           │
-                    Short-circuits on first match
+
+```mermaid
+flowchart LR
+    T[Transaction] --> EX[Exact Match]
+    EX --> FZ[Fuzzy Match]
+    FZ --> RB[Rule-Based]
+    RB --> EXC[Exception]
+    
+    EX -.->|"Match Found"| DONE[Done]
+    FZ -.->|"Match Found"| DONE
+    RB -.->|"Match Found"| DONE
+    EXC -.->|"No Match"| DONE
+    
+    style EX fill:#4CAF50,color:#fff
+    style FZ fill:#2196F3,color:#fff
+    style RB fill:#FF9800,color:#fff
+    style EXC fill:#f44336,color:#fff
+    style DONE fill:#9C27B0,color:#fff
 ```
 
 1. **Exact Match**: Amount, Currency, Date, Reference (trimmed, case-insensitive)
@@ -161,6 +175,7 @@ Transaction → Exact Match → Fuzzy Match → Rule-Based → Exception
 - **Append-Only AuditLog** - no updates/deletes possible
 
 ### Background Jobs (Hangfire)
+
 | Job | Schedule | Purpose |
 |-----|----------|---------|
 | DeadLetterMonitorJob | `*/5 * * * *` | Monitor ASB dead-letter queue |
@@ -208,6 +223,19 @@ dotnet test ReconciliationEngine.Tests
 | Middleware | 7 | CorrelationId, Exception handling |
 
 ## Tech Stack
+
+<p align="left">
+  <img src="https://img.shields.io/badge/.NET-8.0-512BD4?style=flat&logo=.net&logoColor=white" alt=".NET" />
+  <img src="https://img.shields.io/badge/EF_Core-8.0-7D3F98?style=flat" alt="EF Core" />
+  <img src="https://img.shields.io/badge/MediatR-12.2-6B4F9E?style=flat" alt="MediatR" />
+  <img src="https://img.shields.io/badge/FluentValidation-11.x-FF6B6B?style=flat" alt="FluentValidation" />
+  <img src="https://img.shields.io/badge/Azure_Service_Bus-0078D4?style=flat&logo=microsoft-azure" alt="Azure Service Bus" />
+  <img src="https://img.shields.io/badge/Azure_Key_Vault-0078D4?style=flat&logo=microsoft-azure" alt="Azure Key Vault" />
+  <img src="https://img.shields.io/badge/Hangfire-1.8-333333?style=flat" alt="Hangfire" />
+  <img src="https://img.shields.io/badge/Serilog-FF6B35?style=flat" alt="Serilog" />
+  <img src="https://img.shields.io/badge/xUnit-00A3E0?style=flat" alt="xUnit" />
+  <img src="https://img.shields.io/badge/FluentAssertions-47A9E0?style=flat" alt="FluentAssertions" />
+</p>
 
 - **.NET 8** - Target framework
 - **EF Core 8.0** - SQL Server data access
