@@ -76,3 +76,8 @@ packages/
 # Azure
 *.azurepubxml
 .vercel
+recon-ml/models/*.pkl
+recon-ml/models/*.json
+recon-ml/reports/
+recon-ml/.venv/
+recon-ml/recon_ml/__pycache__/

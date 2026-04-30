@@ -15,6 +15,7 @@ using ReconciliationEngine.Infrastructure.Cache;
 using ReconciliationEngine.Infrastructure.Data.Configurations;
 using ReconciliationEngine.Infrastructure.Events;
 using ReconciliationEngine.Infrastructure.Persistence;
+using ReconciliationEngine.Infrastructure.Configuration;
 using ReconciliationEngine.Infrastructure.Services;
 using Serilog;
 using Serilog.Events;
@@ -87,6 +88,17 @@ builder.Services.AddScoped<IEncryptionService>(sp =>
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 builder.Services.AddSingleton<IMatchingRuleCache, MatchingRuleCache>();
+
+// ML Service integration
+builder.Services.Configure<MLServiceOptions>(
+    builder.Configuration.GetSection(MLServiceOptions.SectionName));
+builder.Services.AddScoped<IMLServiceClient, MLServiceClient>();
+builder.Services.AddHttpClient<IMLServiceClient, MLServiceClient>((sp, client) =>
+{
+    var options = sp.GetRequiredService<IOptions<MLServiceOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+});
 
 var serviceBusConnectionString = builder.Configuration["ServiceBus:ConnectionString"] 
     ?? throw new InvalidOperationException("ServiceBus:ConnectionString is required");

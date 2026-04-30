@@ -15,15 +15,18 @@ public class MatchingPipelineCommandHandler : IRequestHandler<MatchingPipelineCo
     private readonly ReconciliationDbContext _context;
     private readonly IEventPublisher _eventPublisher;
     private readonly IMatchingRuleCache _ruleCache;
+    private readonly IMLServiceClient _mlClient;
 
     public MatchingPipelineCommandHandler(
         ReconciliationDbContext context,
         IEventPublisher eventPublisher,
-        IMatchingRuleCache ruleCache)
+        IMatchingRuleCache ruleCache,
+        IMLServiceClient mlClient)
     {
         _context = context;
         _eventPublisher = eventPublisher;
         _ruleCache = ruleCache;
+        _mlClient = mlClient;
     }
 
     public async Task<MatchingPipelineResult> Handle(MatchingPipelineCommand request, CancellationToken cancellationToken)
@@ -51,6 +54,7 @@ public class MatchingPipelineCommandHandler : IRequestHandler<MatchingPipelineCo
         {
             new ExactMatchingStrategy(),
             new FuzzyMatchingStrategy(),
+            new MLMatchingStrategy(_mlClient),
             new RuleBasedMatchingStrategy(_ruleCache)
         };
 

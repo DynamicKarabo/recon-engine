@@ -4,5 +4,6 @@ public enum MatchMethod
 {
     Exact,
     Fuzzy,
-    RuleBased
+    RuleBased,
+    ML
 }
