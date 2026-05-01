@@ -74,6 +74,6 @@ External Source
 
 - UI / frontend
 - Real-time streaming ingestion
-- ML-based matching
+- Rule-based matching pipeline
 - Multi-currency conversion
 - External reporting exports
