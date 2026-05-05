@@ -81,3 +81,6 @@ recon-ml/models/*.json
 recon-ml/reports/
 recon-ml/.venv/
 recon-ml/recon_ml/__pycache__/
+
+# Infrastructure
+k3s-cluster/

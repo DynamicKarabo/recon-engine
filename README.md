@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=csharp&logoColor=white" alt="C#" />
   <img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" alt="MIT" />
   <img src="https://img.shields.io/badge/SQL_Server-CC2927?style=for-the-badge&logo=microsoft-sql-server&logoColor=white" alt="SQL Server" />
-  <img src="https://img.shields.io/badge/tests-72_passing-success?style=for-the-badge" alt="72 tests passing" />
+  <img src="https://img.shields.io/badge/tests-78_passing-success?style=for-the-badge" alt="78 tests passing" />
 </p>
 
 <p align="center">
@@ -128,10 +128,9 @@ ReconciliationEngine/
 │   │   └── TransactionsController.cs
 │   ├── Middleware/
 │   │   ├── CorrelationIdMiddleware.cs              # X-Correlation-Id propagation
-│   │   ├── GlobalExceptionMiddleware.cs            # RFC 9110 Problem Details
-│   │   └── ValidationExceptionMiddleware.cs        # FluentValidation → 400
+│   │   └── GlobalExceptionMiddleware.cs            # RFC 9110 Problem Details
 │   ├── Behaviors/
-│   │   └── ValidationBehavior.cs                   # MediatR pipeline validation
+│   │   └── ValidationBehavior.cs                   # MediatR pipeline + FluentValidation
 │   ├── Jobs/
 │   │   ├── DeadLetterMonitorJob.cs                 # Every 5min — ASB dead-letter
 │   │   ├── StaleExceptionAlertJob.cs               # Daily 08:00 — unassigned >48h
@@ -140,7 +139,7 @@ ReconciliationEngine/
 │   │   └── JwtConfiguration.cs
 │   └── Program.cs
 │
-├── ReconciliationEngine.Tests/                     # 72 tests (xUnit + FluentAssertions)
+├── ReconciliationEngine.Tests/                     # 78 tests (xUnit + FluentAssertions)
 │   ├── Domain/
 │   ├── Validation/
 │   ├── Integration/
@@ -168,16 +167,16 @@ flowchart LR
     EX -->|Match| DONE[Done ✓]
     EX -->|No Match| FZ[Fuzzy Match]
     FZ -->|Match| DONE
-    FZ -->|No Match| RB[Rule-Based Match]
-    RB -->|Match| DONE
-    RB -->|No Match| ML[ML Match]
+    FZ -->|No Match| ML[ML Match]
     ML -->|Match| DONE
-    ML -->|No Match| EXC[Exception Record]
+    ML -->|No Match| RB[Rule-Based Match]
+    RB -->|Match| DONE
+    RB -->|No Match| EXC[Exception Record]
 
     style EX fill:#4CAF50,color:#fff
     style FZ fill:#2196F3,color:#fff
-    style RB fill:#FF9800,color:#fff
     style ML fill:#9C27B0,color:#fff
+    style RB fill:#FF9800,color:#fff
     style EXC fill:#f44336,color:#fff
     style DONE fill:#333,color:#fff
 ```
@@ -188,8 +187,8 @@ The pipeline runs in priority order and **short-circuits** on the first match:
 |----------|--------|-----------------|
 | **Exact** | Amount + Currency + Date + Reference (trimmed, case-insensitive) | All four fields match exactly |
 | **Fuzzy** | FuzzySharp weighted ratio ≥ 0.92, date within ±1 day | Reference/description similar enough |
-| **Rule-Based** | Configurable rules from DB (amount tolerance, reference prefix, date range) | Evaluated in priority order |
 | **ML** | External Python service scores candidate pairs ≥ 0.85 confidence | Complex pattern recognition |
+| **Rule-Based** | Configurable rules from DB (amount tolerance, reference prefix, date range) | Evaluated in priority order |
 
 When no strategy finds a match, the transaction is marked as an **Exception** (`ExceptionCategory.Unmatched`) for manual review.
 
@@ -335,7 +334,7 @@ Required `appsettings.json` values:
     "ConnectionString": "Endpoint=sb://your-namespace.servicebus.windows.net/..."
   },
   "MLService": {
-    "BaseUrl": "http://localhost:8001",
+    "BaseUrl": "http://localhost:8000",
     "TimeoutSeconds": 5,
     "ConfidenceThreshold": 0.85
   }
@@ -346,14 +345,14 @@ Required `appsettings.json` values:
 
 ```bash
 dotnet test ReconciliationEngine.Tests
-# 72 tests passing
+# 78 tests passing
 ```
 
 | Category | Tests | What's Covered |
 |----------|-------|----------------|
 | Domain & Validation | 38 | UTC timestamps, domain events, 35 currencies, field validation |
 | Idempotent Ingestion | 11 | 201/200 responses, audit logs, event publishing, encryption |
-| Matching Pipeline | 11 | Exact, Fuzzy, Rule-Based, ML, short-circuit behavior |
+| Matching Pipeline | 17 | Exact, Fuzzy, ML, Rule-Based, short-circuit behavior, ML strategy scoring |
 | Infrastructure Security | 5 | AES-256 encryption, append-only audit log design |
 | Middleware | 7 | Correlation ID, exception handling, Problem Details |
 

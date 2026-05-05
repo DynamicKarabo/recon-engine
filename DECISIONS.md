@@ -152,13 +152,13 @@ Financial reconciliation software requires high correctness guarantees. Incorrec
 
 ### Decision
 
-Adopt a **layered testing strategy** with 72 tests across four categories:
+Adopt a **layered testing strategy** with 78 tests across four categories:
 
 | Layer | Approach | Tools | Count |
 |-------|----------|-------|-------|
 | **Domain** | Pure unit tests — no infrastructure, no mocking | xUnit + FluentAssertions | 9 |
 | **Validation** | FluentValidation `TestValidate` — no controller needed | FluentValidation TestHelper | 16 |
-| **Matching** | Unit tests with mocked dependencies for ML/RuleCache | xUnit + Moq | 13 |
+| **Matching** | Unit tests with mocked dependencies for ML/RuleCache | xUnit + Moq | 17 |
 | **Integration** | InMemory EF Core database, mocked external services | xUnit + Moq + InMemory | 16 |
 | **Infrastructure Security** | Verify encryption, append-only invariants via reflection | xUnit + Moq + InMemory | 5 |
 | **Middleware (E2E)** | `DefaultHttpContext` — full middleware pipeline | xUnit + Moq | 7 |

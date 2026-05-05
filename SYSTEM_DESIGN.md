@@ -16,7 +16,7 @@ Automate the reconciliation of financial transactions ingested from disparate so
 | Capability | Description |
 |------------|-------------|
 | **Idempotent Ingestion** | Transactions keyed on `(Source, ExternalId)` — duplicate submissions return existing record without side effects |
-| **Multi-Strategy Matching** | Four strategies in cascade: Exact → Fuzzy → Rule-Based → ML — first match wins |
+| **Multi-Strategy Matching** | Four strategies in cascade: Exact → Fuzzy → ML → Rule-Based — first match wins |
 | **Exception Management** | Unmatched transactions become exception records with assign/resolve/dismiss lifecycle |
 | **Audit Trail** | Every mutation is appended to an immutable `AuditLog` with correlation ID traceability |
 | **Event-Driven** | Domain events (ingested, matched, exception) published to Azure Service Bus for downstream consumers |
@@ -259,7 +259,7 @@ flowchart LR
 Each matching strategy implements `IMatchingStrategy` and is tried in cascade. The pipeline short-circuits on the first non-null `MatchResult`.
 
 ```
-Transaction → ExactMatch? → NO → FuzzyMatch? → NO → RuleBased? → NO → MLMatch? → NO → Exception
+Transaction → ExactMatch? → NO → FuzzyMatch? → NO → MLMatch? → NO → RuleBased? → NO → Exception
                 │                      │                  │              │
                 ↓ YES                  ↓ YES              ↓ YES          ↓ YES
               [Done]                 [Done]              [Done]         [Done]
@@ -436,12 +436,12 @@ All external dependencies are configured through `appsettings.json` / environmen
 |-------|-----------|-------|-------|
 | Domain | Unit | xUnit + FluentAssertions | 9 |
 | Validation | Unit | FluentValidation TestHelper | 16 |
-| Matching | Unit | xUnit + Moq | 13 |
+| Matching | Unit | xUnit + Moq | 17 |
 | Integration | Integration | InMemory EF Core + Moq | 16 |
 | Middleware (E2E) | Integration | DefaultHttpContext | 7 |
 | Infrastructure Security | Integration | InMemory EF Core + Moq | 5 |
 
-**72 tests total.**
+**78 tests total.**
 
 Key testing principles:
 - Domain entities tested in isolation (no infrastructure)
